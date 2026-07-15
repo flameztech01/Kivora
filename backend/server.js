@@ -23,7 +23,8 @@ const MONGO_URL = process.env.MONGO_URL;
 app.use(cors({
     origin: [
         'http://localhost:2000',
-        'https://kivora.curriumx.online'
+        'https://kivora.curriumx.online',
+        'http://kivora.curriumx.online'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH','OPTIONS'],
