@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/* Custom Scrollbar - Global */
+/* Works on Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #d1d5db #f1f1f1;
+}
+
+/* Sidebar specific scrollbar */
+.fixed-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fixed-sidebar::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.fixed-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
+
+/* Hide scrollbar when not hovering */
+.hide-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.hide-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+}
+
+.hide-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
