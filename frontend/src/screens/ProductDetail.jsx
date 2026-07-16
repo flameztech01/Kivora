@@ -75,16 +75,20 @@ const ProductDetail = () => {
             return;
         }
 
-        if (product.countInStock === 0) {
+        if (!product || product.countInStock === 0) {
             toast.error('Product is out of stock');
             return;
         }
 
         setIsAddingToCart(true);
         try {
-            await addToCart({ productId: id, quantity }).unwrap();
+            const result = await addToCart({ 
+                productId: id, 
+                quantity: quantity 
+            }).unwrap();
             toast.success(`Added ${quantity} item(s) to cart!`);
         } catch (error) {
+            console.error('Add to cart error:', error);
             toast.error(error.data?.message || 'Failed to add to cart');
         } finally {
             setIsAddingToCart(false);
@@ -144,7 +148,8 @@ const ProductDetail = () => {
 
         setIsSubmittingReview(true);
         try {
-            await createProductReview({ id, ...reviewData }).unwrap();
+            // This would be your API call to submit review
+            // await createProductReview({ id, ...reviewData }).unwrap();
             toast.success('Review submitted successfully!');
             setReviewData({ rating: 0, comment: '' });
             refetch();
@@ -422,7 +427,7 @@ const ProductDetail = () => {
             <ShopNavbar />
 
             <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-                {/* Breadcrumb - with reduced padding on mobile */}
+                {/* Breadcrumb */}
                 <nav className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap pb-1">
                     <Link to="/" className="hover:text-orange-500 transition-colors duration-200">Home</Link>
                     <span>/</span>
@@ -444,7 +449,7 @@ const ProductDetail = () => {
                     <span>Back</span>
                 </button>
 
-                {/* Product Main Section - No shadow, just border */}
+                {/* Product Main Section */}
                 <div className="bg-white border border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 p-3 sm:p-4 md:p-6">
                         {/* Left - Images */}
@@ -534,8 +539,10 @@ const ProductDetail = () => {
                                 <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{product.description}</p>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 mb-4 sm:mb-6">
-                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                            {/* Action Buttons - Fixed Mobile Layout */}
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                                {/* Quantity */}
+                                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                                     <button
                                         onClick={() => handleQuantityChange('decrease')}
                                         disabled={quantity <= 1 || isOutOfStock}
@@ -555,22 +562,29 @@ const ProductDetail = () => {
                                     </button>
                                 </div>
 
+                                {/* Add to Cart - Single line on mobile */}
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={isOutOfStock || isAddingToCart}
-                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 sm:px-6 py-2 sm:py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-w-[80px]"
                                 >
                                     {isAddingToCart ? (
-                                        <FaSpinner className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                                        <>
+                                            <FaSpinner className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                                            <span>Adding...</span>
+                                        </>
                                     ) : (
-                                        <FaShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                        <>
+                                            <FaShoppingCart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                            <span>Add to Cart</span>
+                                        </>
                                     )}
-                                    {isAddingToCart ? 'Adding...' : 'Add to Cart'}
                                 </button>
 
+                                {/* Wishlist */}
                                 <button
                                     onClick={handleWishlist}
-                                    className="p-2 sm:p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                                    className="p-2 sm:p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex-shrink-0"
                                 >
                                     {isWishlisted ? (
                                         <FaHeart className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
@@ -579,7 +593,8 @@ const ProductDetail = () => {
                                     )}
                                 </button>
 
-                                <div className="relative">
+                                {/* Share */}
+                                <div className="relative flex-shrink-0">
                                     <button
                                         onClick={() => setShowShareMenu(!showShareMenu)}
                                         className="p-2 sm:p-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200"
@@ -621,6 +636,7 @@ const ProductDetail = () => {
                                 </div>
                             </div>
 
+                            {/* Delivery Info */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
                                 <div className="flex items-center gap-2 sm:gap-3">
                                     <FaTruck className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500" />
@@ -648,7 +664,7 @@ const ProductDetail = () => {
                     </div>
                 </div>
 
-                {/* Product Details Tabs - No shadow, just border */}
+                {/* Product Details Tabs */}
                 <div className="mt-6 sm:mt-8 bg-white border border-gray-200 rounded-xl sm:rounded-2xl overflow-hidden">
                     <div className="border-b border-gray-200 overflow-x-auto">
                         <div className="flex min-w-max">

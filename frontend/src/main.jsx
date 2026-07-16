@@ -18,6 +18,7 @@ import Profile from './screens/Profile.jsx'
 import ProductDetail from './screens/ProductDetail.jsx'
 import Cart from './screens/Cart.jsx'
 import MyOrders from './screens/MyOrders.jsx'
+import Checkout from './screens/Checkout.jsx';
 
 import AdminDashboard from './screens/AdminDashboard.jsx'
 import AdminProducts from './screens/AdminProducts.jsx'
@@ -25,6 +26,7 @@ import AdminCreateProduct from './screens/AdminCreateProduct.jsx'
 import AdminEditProduct from './screens/AdminEditProduct.jsx'
 import AdminViewOrders from './screens/AdminViewOrders.jsx';
 import Wishlist from './screens/Wishlist.jsx';
+import VerifyPayment from './screens/VerifyPayment.jsx';
 
 const router = createBrowserRouter([
   {path: '/', element: <App />, children: [
@@ -37,6 +39,8 @@ const router = createBrowserRouter([
     {path: '/cart', element: <Cart />},
     {path: '/my-orders', element: <MyOrders />},
     {path: '/wishlist', element: <Wishlist />},
+    {path: '/checkout', element: <Checkout />},
+    {path: '/payment/verify', element: <VerifyPayment />},
 
     {path: '/admin/dashboard', element: <AdminDashboard />},
     {path: '/admin/products', element: <AdminProducts />},

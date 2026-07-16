@@ -60,3 +60,47 @@
 .hide-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #f97316;
 }
+
+/* Custom toast styles */
+.custom-toast-container .Toastify__toast {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.custom-toast-container .Toastify__toast--success {
+  border-left: 4px solid #22c55e;
+}
+
+.custom-toast-container .Toastify__toast--error {
+  border-left: 4px solid #ef4444;
+}
+
+.custom-toast-container .Toastify__toast--warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.custom-toast-container .Toastify__toast--info {
+  border-left: 4px solid #3b82f6;
+}
+
+/* Toast close button */
+.custom-toast-container .Toastify__close-button {
+  color: #6b7280;
+}
+
+.custom-toast-container .Toastify__close-button:hover {
+  color: #374151;
+}
+
+/* Toast progress bar */
+.custom-toast-container .Toastify__progress-bar {
+  height: 3px;
+}
+
+.custom-toast-container .Toastify__progress-bar--success {
+  background: #22c55e;
+}
+
+.custom-toast-container .Toastify__progress-bar--error {
+  background: #ef4444;
+}

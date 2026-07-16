@@ -228,8 +228,8 @@ orderSchema.statics.getSellerStats = async function(sellerId) {
     return stats;
 };
 
-// Pre-save middleware to calculate subtotal
-orderSchema.pre('save', function(next) {
+// Pre-save middleware to calculate subtotal - REMOVED next
+orderSchema.pre('save', function() {
     if (this.isModified('orderItems') || this.isModified('discount') || this.isModified('tax') || this.isModified('shippingFee')) {
         // Calculate subtotal from order items
         this.subtotal = this.orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -242,18 +242,16 @@ orderSchema.pre('save', function(next) {
             this.totalPrice = 0;
         }
     }
-    next();
 });
 
-// Pre-save middleware to set paidAt when isPaid changes to true
-orderSchema.pre('save', function(next) {
+// Pre-save middleware to set paidAt when isPaid changes to true - REMOVED next
+orderSchema.pre('save', function() {
     if (this.isModified('isPaid') && this.isPaid && !this.paidAt) {
         this.paidAt = new Date();
     }
     if (this.isModified('isDelivered') && this.isDelivered && !this.deliveredAt) {
         this.deliveredAt = new Date();
     }
-    next();
 });
 
 // Set toJSON to include virtuals
