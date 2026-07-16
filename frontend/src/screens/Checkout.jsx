@@ -392,7 +392,7 @@ const Checkout = () => {
                                         <p className="text-sm font-medium text-gray-700">Paystack (Card, Bank Transfer, USSD)</p>
                                         <p className="text-xs text-gray-400">Secure payment via Paystack</p>
                                     </div>
-                                    <img src="https://paystack.com/assets/images/logo.svg" alt="Paystack" className="h-6" />
+                                    {/* Paystack logo removed */}
                                 </label>
 
                                 <label className={`flex items-center gap-4 p-3 border rounded-xl cursor-pointer transition-all duration-200 ${
@@ -472,17 +472,17 @@ const Checkout = () => {
                             <button
                                 onClick={handleSubmit}
                                 disabled={isProcessing}
-                                className="w-full mt-4 flex items-center justify-center gap-2 px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full flex items-center justify-center gap-1.5 px-2 sm:px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm whitespace-nowrap h-10 sm:h-11"
                             >
                                 {isProcessing ? (
                                     <>
-                                        <FaSpinner className="h-4 w-4 animate-spin" />
-                                        Processing...
+                                        <FaSpinner className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
+                                        <span>Processing...</span>
                                     </>
                                 ) : (
                                     <>
-                                        <FaLock className="h-4 w-4" />
-                                        Place Order
+                                        <FaLock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                        <span>Place Order</span>
                                     </>
                                 )}
                             </button>
