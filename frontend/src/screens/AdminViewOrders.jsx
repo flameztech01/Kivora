@@ -148,13 +148,12 @@ const AdminViewOrders = () => {
         window.location.reload();
     };
 
-    // ✅ FIXED: Full-page receipt download with logo
+    // ✅ FIXED: Full-page receipt download with better spacing and breathing room
     const handleDownloadReceipt = async () => {
         if (!selectedOrder) return;
         setIsDownloading(true);
 
         try {
-            // Create a temporary container
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'fixed';
             tempContainer.style.top = '0';
@@ -163,102 +162,101 @@ const AdminViewOrders = () => {
             tempContainer.style.height = 'auto';
             tempContainer.style.backgroundColor = '#ffffff';
             tempContainer.style.zIndex = '-1';
-            tempContainer.style.padding = '40px';
+            tempContainer.style.padding = '60px 40px';
             tempContainer.style.boxSizing = 'border-box';
 
-            // Build receipt HTML
             tempContainer.innerHTML = `
-                <div style="max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif;">
+                <div style="max-width: 900px; margin: 0 auto; font-family: 'Segoe UI', Arial, sans-serif; color: #1f2937;">
                     <!-- Header with Logo -->
-                    <div style="text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 24px;">
-                        <img src="/logo.png" alt="Kivora" style="height: 60px; margin: 0 auto 8px;" />
-                        <p style="color: #9ca3af; font-size: 14px; margin: 0;">Order Receipt</p>
+                    <div style="text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 30px; margin-bottom: 32px;">
+                        <img src="/logo.png" alt="Kivora" style="height: 70px; margin: 0 auto 12px;" />
+                        <p style="color: #9ca3af; font-size: 16px; margin: 0; letter-spacing: 0.5px;">Order Receipt</p>
                     </div>
 
                     <!-- Order Info -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
                         <div>
-                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">Order ID</p>
-                            <p style="font-size: 18px; font-weight: 600; color: #1f2937; margin: 0;">#${selectedOrder._id?.slice(-8) || 'N/A'}</p>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0; font-weight: 500;">Order ID</p>
+                            <p style="font-size: 22px; font-weight: 700; color: #1f2937; margin: 0;">#${selectedOrder._id?.slice(-8) || 'N/A'}</p>
                         </div>
                         <div style="text-align: right;">
-                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">Date</p>
-                            <p style="font-size: 14px; font-weight: 500; color: #374151; margin: 0;">${formatDateFull(selectedOrder.createdAt)}</p>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0; font-weight: 500;">Date</p>
+                            <p style="font-size: 15px; font-weight: 500; color: #374151; margin: 0;">${formatDateFull(selectedOrder.createdAt)}</p>
                         </div>
                     </div>
 
-                    <!-- Status -->
-                    <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
-                        <span style="background: ${selectedOrder.status === 'delivered' ? '#22c55e' : selectedOrder.status === 'cancelled' ? '#ef4444' : '#3b82f6'}; color: white; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;">
+                    <!-- Status Badges -->
+                    <div style="display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap;">
+                        <span style="background: ${selectedOrder.status === 'delivered' ? '#22c55e' : selectedOrder.status === 'cancelled' ? '#ef4444' : '#3b82f6'}; color: white; padding: 6px 22px; border-radius: 30px; font-size: 14px; font-weight: 600;">
                             ${selectedOrder.status || 'Pending'}
                         </span>
-                        <span style="background: ${selectedOrder.isPaid ? '#22c55e' : '#ef4444'}; color: white; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;">
+                        <span style="background: ${selectedOrder.isPaid ? '#22c55e' : '#ef4444'}; color: white; padding: 6px 22px; border-radius: 30px; font-size: 14px; font-weight: 600;">
                             ${selectedOrder.isPaid ? 'Paid' : 'Unpaid'}
                         </span>
                     </div>
 
                     <!-- Customer & Shipping -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
-                            <p style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Customer</p>
-                            <p style="font-size: 14px; font-weight: 500; color: #1f2937; margin: 0 0 4px 0;">${selectedOrder.user?.name || 'Unknown'}</p>
-                            <p style="font-size: 13px; color: #6b7280; margin: 0 0 2px 0;">${selectedOrder.user?.email || 'N/A'}</p>
-                            <p style="font-size: 13px; color: #6b7280; margin: 0;">${selectedOrder.user?.phone || 'N/A'}</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 36px;">
+                        <div style="background: #f9fafb; padding: 20px 24px; border-radius: 12px;">
+                            <p style="font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 10px 0;">Customer</p>
+                            <p style="font-size: 15px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">${selectedOrder.user?.name || 'Unknown'}</p>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 2px 0;">${selectedOrder.user?.email || 'N/A'}</p>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0;">${selectedOrder.user?.phone || 'N/A'}</p>
                         </div>
-                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
-                            <p style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Shipping Address</p>
-                            <p style="font-size: 14px; color: #374151; margin: 0 0 2px 0;">${selectedOrder.shippingAddress?.street || 'N/A'}</p>
-                            <p style="font-size: 14px; color: #374151; margin: 0 0 2px 0;">
+                        <div style="background: #f9fafb; padding: 20px 24px; border-radius: 12px;">
+                            <p style="font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 10px 0;">Shipping Address</p>
+                            <p style="font-size: 15px; color: #374151; margin: 0 0 2px 0; font-weight: 500;">${selectedOrder.shippingAddress?.street || 'N/A'}</p>
+                            <p style="font-size: 15px; color: #374151; margin: 0 0 2px 0;">
                                 ${selectedOrder.shippingAddress?.city || ''}${selectedOrder.shippingAddress?.state ? `, ${selectedOrder.shippingAddress.state}` : ''}${selectedOrder.shippingAddress?.zipCode ? ` ${selectedOrder.shippingAddress.zipCode}` : ''}
                             </p>
-                            <p style="font-size: 14px; color: #374151; margin: 0;">${selectedOrder.shippingAddress?.country || 'N/A'}</p>
+                            <p style="font-size: 15px; color: #374151; margin: 0;">${selectedOrder.shippingAddress?.country || 'N/A'}</p>
                         </div>
                     </div>
 
                     <!-- Items Table -->
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 32px;">
                         <thead>
                             <tr style="border-bottom: 2px solid #e5e7eb;">
-                                <th style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Item</th>
-                                <th style="text-align: center; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Qty</th>
-                                <th style="text-align: right; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
-                                <th style="text-align: right; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
+                                <th style="text-align: left; padding: 12px 8px 12px 0; font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 50%;">Item</th>
+                                <th style="text-align: center; padding: 12px 8px; font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 12%;">Qty</th>
+                                <th style="text-align: right; padding: 12px 8px; font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 19%;">Price</th>
+                                <th style="text-align: right; padding: 12px 0 12px 8px; font-size: 13px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; width: 19%;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${selectedOrder.orderItems?.map((item) => `
                                 <tr style="border-bottom: 1px solid #f3f4f6;">
-                                    <td style="padding: 10px 0; font-size: 14px; color: #1f2937;">${item.name}</td>
-                                    <td style="text-align: center; padding: 10px 0; font-size: 14px; color: #374151;">${item.quantity}</td>
-                                    <td style="text-align: right; padding: 10px 0; font-size: 14px; color: #374151;">${formatCurrency(item.price)}</td>
-                                    <td style="text-align: right; padding: 10px 0; font-size: 14px; font-weight: 600; color: #1f2937;">${formatCurrency(item.price * item.quantity)}</td>
+                                    <td style="padding: 14px 8px 14px 0; font-size: 15px; color: #1f2937;">${item.name}</td>
+                                    <td style="text-align: center; padding: 14px 8px; font-size: 15px; color: #374151;">${item.quantity}</td>
+                                    <td style="text-align: right; padding: 14px 8px; font-size: 15px; color: #374151;">${formatCurrency(item.price)}</td>
+                                    <td style="text-align: right; padding: 14px 0 14px 8px; font-size: 15px; font-weight: 600; color: #1f2937;">${formatCurrency(item.price * item.quantity)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" style="text-align: right; padding: 12px 0 4px 0; font-size: 14px; color: #6b7280;">Subtotal</td>
-                                <td style="text-align: right; padding: 12px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${formatCurrency(selectedOrder.totalPrice)}</td>
+                                <td colspan="3" style="text-align: right; padding: 16px 8px 6px 0; font-size: 15px; color: #6b7280;">Subtotal</td>
+                                <td style="text-align: right; padding: 16px 0 6px 0; font-size: 15px; font-weight: 600; color: #1f2937;">${formatCurrency(selectedOrder.totalPrice)}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; color: #6b7280;">Shipping</td>
-                                <td style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${selectedOrder.shippingFee === 0 ? 'Free' : formatCurrency(selectedOrder.shippingFee || 0)}</td>
+                                <td colspan="3" style="text-align: right; padding: 6px 8px 6px 0; font-size: 15px; color: #6b7280;">Shipping</td>
+                                <td style="text-align: right; padding: 6px 0 6px 0; font-size: 15px; font-weight: 600; color: #1f2937;">${selectedOrder.shippingFee === 0 ? 'Free' : formatCurrency(selectedOrder.shippingFee || 0)}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; color: #6b7280;">Tax</td>
-                                <td style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${formatCurrency(selectedOrder.tax || 0)}</td>
+                                <td colspan="3" style="text-align: right; padding: 6px 8px 16px 0; font-size: 15px; color: #6b7280;">Tax</td>
+                                <td style="text-align: right; padding: 6px 0 16px 0; font-size: 15px; font-weight: 600; color: #1f2937;">${formatCurrency(selectedOrder.tax || 0)}</td>
                             </tr>
                             <tr style="border-top: 2px solid #e5e7eb;">
-                                <td colspan="3" style="text-align: right; padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #1f2937;">Total</td>
-                                <td style="text-align: right; padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #f97316;">${formatCurrency(selectedOrder.totalPrice)}</td>
+                                <td colspan="3" style="text-align: right; padding: 18px 8px 0 0; font-size: 18px; font-weight: 700; color: #1f2937;">Total</td>
+                                <td style="text-align: right; padding: 18px 0 0 0; font-size: 20px; font-weight: 700; color: #f97316;">${formatCurrency(selectedOrder.totalPrice)}</td>
                             </tr>
                         </tfoot>
                     </table>
 
                     <!-- Footer -->
-                    <div style="text-align: center; border-top: 2px solid #e5e7eb; padding-top: 16px; margin-top: 8px;">
-                        <p style="font-size: 12px; color: #9ca3af; margin: 0;">Thank you for shopping with Kivora!</p>
-                        <p style="font-size: 11px; color: #d1d5db; margin: 4px 0 0 0;">© ${new Date().getFullYear()} Kivora. All rights reserved.</p>
+                    <div style="text-align: center; border-top: 2px solid #e5e7eb; padding-top: 24px; margin-top: 8px;">
+                        <p style="font-size: 14px; color: #6b7280; margin: 0;">Thank you for shopping with Kivora!</p>
+                        <p style="font-size: 12px; color: #9ca3af; margin: 6px 0 0 0;">© ${new Date().getFullYear()} Kivora. All rights reserved.</p>
                     </div>
                 </div>
             `;
@@ -269,9 +267,10 @@ const AdminViewOrders = () => {
                 scale: 2,
                 backgroundColor: '#ffffff',
                 useCORS: true,
-                width: 800,
+                width: 900,
                 height: tempContainer.scrollHeight,
-                windowHeight: tempContainer.scrollHeight
+                windowHeight: tempContainer.scrollHeight,
+                logging: false
             });
 
             document.body.removeChild(tempContainer);
