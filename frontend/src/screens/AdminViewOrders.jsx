@@ -33,11 +33,12 @@ import {
 import { useGetAdminOrdersQuery, useUpdateOrderStatusMutation } from '../slices/adminApiSlice';
 import ShopNavbar from '../components/ShopNavbar';
 import { toast } from 'react-toastify';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas-pro';
 
 const AdminViewOrders = () => {
     const { userInfo } = useSelector((state) => state.auth);
     const navigate = useNavigate();
-    const printRef = useRef();
 
     const [currentPage, setCurrentPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState('');
@@ -45,6 +46,7 @@ const AdminViewOrders = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showOrderModal, setShowOrderModal] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         if (!userInfo || userInfo.role !== 'admin') {
@@ -136,7 +138,6 @@ const AdminViewOrders = () => {
         { value: 'cancelled', label: 'Cancelled' }
     ];
 
-    // Print order function
     const handlePrintOrder = () => {
         if (!selectedOrder) return;
         const printContent = document.getElementById('order-print-content');
@@ -147,24 +148,159 @@ const AdminViewOrders = () => {
         window.location.reload();
     };
 
-    // Download PDF (using window.print with save as PDF)
-    const handleDownloadPDF = () => {
+    // ✅ FIXED: Full-page receipt download with logo
+    const handleDownloadReceipt = async () => {
         if (!selectedOrder) return;
-        const printContent = document.getElementById('order-print-content');
-        const originalContents = document.body.innerHTML;
-        document.body.innerHTML = printContent.innerHTML;
-        window.print();
-        document.body.innerHTML = originalContents;
-        window.location.reload();
+        setIsDownloading(true);
+
+        try {
+            // Create a temporary container
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'fixed';
+            tempContainer.style.top = '0';
+            tempContainer.style.left = '0';
+            tempContainer.style.width = '100%';
+            tempContainer.style.height = 'auto';
+            tempContainer.style.backgroundColor = '#ffffff';
+            tempContainer.style.zIndex = '-1';
+            tempContainer.style.padding = '40px';
+            tempContainer.style.boxSizing = 'border-box';
+
+            // Build receipt HTML
+            tempContainer.innerHTML = `
+                <div style="max-width: 800px; margin: 0 auto; font-family: Arial, sans-serif;">
+                    <!-- Header with Logo -->
+                    <div style="text-align: center; border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 24px;">
+                        <img src="/logo.png" alt="Kivora" style="height: 60px; margin: 0 auto 8px;" />
+                        <p style="color: #9ca3af; font-size: 14px; margin: 0;">Order Receipt</p>
+                    </div>
+
+                    <!-- Order Info -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+                        <div>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">Order ID</p>
+                            <p style="font-size: 18px; font-weight: 600; color: #1f2937; margin: 0;">#${selectedOrder._id?.slice(-8) || 'N/A'}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 14px; color: #6b7280; margin: 0 0 4px 0;">Date</p>
+                            <p style="font-size: 14px; font-weight: 500; color: #374151; margin: 0;">${formatDateFull(selectedOrder.createdAt)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+                        <span style="background: ${selectedOrder.status === 'delivered' ? '#22c55e' : selectedOrder.status === 'cancelled' ? '#ef4444' : '#3b82f6'}; color: white; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;">
+                            ${selectedOrder.status || 'Pending'}
+                        </span>
+                        <span style="background: ${selectedOrder.isPaid ? '#22c55e' : '#ef4444'}; color: white; padding: 4px 16px; border-radius: 20px; font-size: 13px; font-weight: 500;">
+                            ${selectedOrder.isPaid ? 'Paid' : 'Unpaid'}
+                        </span>
+                    </div>
+
+                    <!-- Customer & Shipping -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
+                            <p style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Customer</p>
+                            <p style="font-size: 14px; font-weight: 500; color: #1f2937; margin: 0 0 4px 0;">${selectedOrder.user?.name || 'Unknown'}</p>
+                            <p style="font-size: 13px; color: #6b7280; margin: 0 0 2px 0;">${selectedOrder.user?.email || 'N/A'}</p>
+                            <p style="font-size: 13px; color: #6b7280; margin: 0;">${selectedOrder.user?.phone || 'N/A'}</p>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
+                            <p style="font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px 0;">Shipping Address</p>
+                            <p style="font-size: 14px; color: #374151; margin: 0 0 2px 0;">${selectedOrder.shippingAddress?.street || 'N/A'}</p>
+                            <p style="font-size: 14px; color: #374151; margin: 0 0 2px 0;">
+                                ${selectedOrder.shippingAddress?.city || ''}${selectedOrder.shippingAddress?.state ? `, ${selectedOrder.shippingAddress.state}` : ''}${selectedOrder.shippingAddress?.zipCode ? ` ${selectedOrder.shippingAddress.zipCode}` : ''}
+                            </p>
+                            <p style="font-size: 14px; color: #374151; margin: 0;">${selectedOrder.shippingAddress?.country || 'N/A'}</p>
+                        </div>
+                    </div>
+
+                    <!-- Items Table -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Item</th>
+                                <th style="text-align: center; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Qty</th>
+                                <th style="text-align: right; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Price</th>
+                                <th style="text-align: right; padding: 8px 0; font-size: 12px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${selectedOrder.orderItems?.map((item) => `
+                                <tr style="border-bottom: 1px solid #f3f4f6;">
+                                    <td style="padding: 10px 0; font-size: 14px; color: #1f2937;">${item.name}</td>
+                                    <td style="text-align: center; padding: 10px 0; font-size: 14px; color: #374151;">${item.quantity}</td>
+                                    <td style="text-align: right; padding: 10px 0; font-size: 14px; color: #374151;">${formatCurrency(item.price)}</td>
+                                    <td style="text-align: right; padding: 10px 0; font-size: 14px; font-weight: 600; color: #1f2937;">${formatCurrency(item.price * item.quantity)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 12px 0 4px 0; font-size: 14px; color: #6b7280;">Subtotal</td>
+                                <td style="text-align: right; padding: 12px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${formatCurrency(selectedOrder.totalPrice)}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; color: #6b7280;">Shipping</td>
+                                <td style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${selectedOrder.shippingFee === 0 ? 'Free' : formatCurrency(selectedOrder.shippingFee || 0)}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; color: #6b7280;">Tax</td>
+                                <td style="text-align: right; padding: 4px 0 4px 0; font-size: 14px; font-weight: 500; color: #1f2937;">${formatCurrency(selectedOrder.tax || 0)}</td>
+                            </tr>
+                            <tr style="border-top: 2px solid #e5e7eb;">
+                                <td colspan="3" style="text-align: right; padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #1f2937;">Total</td>
+                                <td style="text-align: right; padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: #f97316;">${formatCurrency(selectedOrder.totalPrice)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <!-- Footer -->
+                    <div style="text-align: center; border-top: 2px solid #e5e7eb; padding-top: 16px; margin-top: 8px;">
+                        <p style="font-size: 12px; color: #9ca3af; margin: 0;">Thank you for shopping with Kivora!</p>
+                        <p style="font-size: 11px; color: #d1d5db; margin: 4px 0 0 0;">© ${new Date().getFullYear()} Kivora. All rights reserved.</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(tempContainer);
+
+            const canvas = await html2canvas(tempContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                width: 800,
+                height: tempContainer.scrollHeight,
+                windowHeight: tempContainer.scrollHeight
+            });
+
+            document.body.removeChild(tempContainer);
+
+            const imgData = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'px',
+                format: [canvas.width, canvas.height]
+            });
+
+            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+            pdf.save(`order-${selectedOrder._id?.slice(-8) || 'receipt'}.pdf`);
+
+            toast.success('Receipt downloaded successfully!');
+        } catch (err) {
+            console.error('Failed to generate receipt PDF:', err);
+            toast.error('Could not generate receipt. Please try printing instead.');
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
-    // Open order in modal
     const openOrderModal = (order) => {
         setSelectedOrder(order);
         setShowOrderModal(true);
     };
 
-    // Close order modal
     const closeOrderModal = () => {
         setShowOrderModal(false);
         setSelectedOrder(null);
@@ -343,7 +479,7 @@ const AdminViewOrders = () => {
                     {orders.length > 0 ? (
                         <div className="divide-y divide-gray-100">
                             {orders.map((order) => (
-                                <div 
+                                <div
                                     key={order._id}
                                     onClick={() => openOrderModal(order)}
                                     className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors duration-200 cursor-pointer active:bg-gray-100"
@@ -368,7 +504,7 @@ const AdminViewOrders = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3 flex-shrink-0">
                                         <div className="text-right hidden sm:block">
                                             <p className="text-sm font-medium text-gray-800">{formatCurrency(order.totalPrice)}</p>
@@ -452,11 +588,11 @@ const AdminViewOrders = () => {
 
                 {/* Order Detail Modal - Slide up from bottom */}
                 {showOrderModal && selectedOrder && (
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
                         onClick={closeOrderModal}
                     >
-                        <div 
+                        <div
                             className="bg-white rounded-t-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up"
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -483,8 +619,8 @@ const AdminViewOrders = () => {
                                 </button>
                             </div>
 
-                            {/* Print/Download Actions */}
-                            <div className="px-5 py-3 border-b border-gray-100 flex gap-2 bg-gray-50/50">
+                            {/* Action Buttons - Print & Download Receipt */}
+                            <div className="px-5 py-3 border-b border-gray-100 flex gap-2 bg-gray-50/50 flex-wrap">
                                 <button
                                     onClick={handlePrintOrder}
                                     className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors duration-200"
@@ -493,11 +629,16 @@ const AdminViewOrders = () => {
                                     Print
                                 </button>
                                 <button
-                                    onClick={handleDownloadPDF}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition-colors duration-200"
+                                    onClick={handleDownloadReceipt}
+                                    disabled={isDownloading}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <FaFilePdf className="h-3.5 w-3.5" />
-                                    PDF
+                                    {isDownloading ? (
+                                        <FaSpinner className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <FaDownload className="h-3.5 w-3.5" />
+                                    )}
+                                    {isDownloading ? 'Preparing...' : 'Download Receipt'}
                                 </button>
                             </div>
 
@@ -649,94 +790,93 @@ const AdminViewOrders = () => {
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* Hidden Print Content */}
-                <div id="order-print-content" className="hidden">
-                    {selectedOrder && (
-                        <div className="p-8 max-w-4xl mx-auto bg-white" ref={printRef}>
-                            {/* Print Header */}
-                            <div className="text-center border-b border-gray-300 pb-4 mb-6">
-                                <h1 className="text-2xl font-bold text-gray-800">Kivora</h1>
-                                <p className="text-sm text-gray-500">Order Confirmation</p>
+            {/* Hidden Print Content (kept for print functionality) */}
+            <div id="order-print-content" className="hidden">
+                {selectedOrder && (
+                    <div className="p-8 max-w-4xl mx-auto bg-white">
+                        <div className="text-center border-b border-gray-300 pb-4 mb-6">
+                            <h1 className="text-2xl font-bold text-gray-800">Kivora</h1>
+                            <p className="text-sm text-gray-500">Order Confirmation</p>
+                        </div>
+
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h2 className="text-lg font-semibold">Order #{selectedOrder._id?.slice(-8)}</h2>
+                                <p className="text-sm text-gray-500">Placed on {formatDateFull(selectedOrder.createdAt)}</p>
                             </div>
-
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <h2 className="text-lg font-semibold">Order #{selectedOrder._id?.slice(-8)}</h2>
-                                    <p className="text-sm text-gray-500">Placed on {formatDateFull(selectedOrder.createdAt)}</p>
-                                </div>
-                                <div className="text-right">
-                                    <span className={`px-4 py-1 rounded-full text-white text-sm font-medium ${getStatusBadgeColor(selectedOrder.status || 'pending')}`}>
-                                        {selectedOrder.status || 'Pending'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6 mb-6">
-                                <div>
-                                    <h3 className="font-semibold text-gray-700 mb-2">Customer Information</h3>
-                                    <p className="text-sm">{selectedOrder.user?.name || 'Unknown'}</p>
-                                    <p className="text-sm text-gray-600">{selectedOrder.user?.email || 'N/A'}</p>
-                                    <p className="text-sm text-gray-600">{selectedOrder.user?.phone || 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-gray-700 mb-2">Shipping Address</h3>
-                                    <p className="text-sm">{selectedOrder.shippingAddress?.street || 'N/A'}</p>
-                                    <p className="text-sm">
-                                        {selectedOrder.shippingAddress?.city || ''}
-                                        {selectedOrder.shippingAddress?.state ? `, ${selectedOrder.shippingAddress.state}` : ''}
-                                        {selectedOrder.shippingAddress?.zipCode ? ` ${selectedOrder.shippingAddress.zipCode}` : ''}
-                                    </p>
-                                    <p className="text-sm">{selectedOrder.shippingAddress?.country || 'N/A'}</p>
-                                </div>
-                            </div>
-
-                            <table className="w-full mb-6">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="text-left py-2 text-sm font-semibold">Item</th>
-                                        <th className="text-center py-2 text-sm font-semibold">Qty</th>
-                                        <th className="text-right py-2 text-sm font-semibold">Price</th>
-                                        <th className="text-right py-2 text-sm font-semibold">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {selectedOrder.orderItems?.map((item, index) => (
-                                        <tr key={index} className="border-b border-gray-100">
-                                            <td className="py-2 text-sm">{item.name}</td>
-                                            <td className="text-center py-2 text-sm">{item.quantity}</td>
-                                            <td className="text-right py-2 text-sm">{formatCurrency(item.price)}</td>
-                                            <td className="text-right py-2 text-sm font-medium">{formatCurrency(item.price * item.quantity)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colSpan="3" className="text-right py-2 text-sm font-medium">Subtotal</td>
-                                        <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.totalPrice)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3" className="text-right py-2 text-sm font-medium">Shipping</td>
-                                        <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.shippingFee || 0)}</td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="3" className="text-right py-2 text-sm font-medium">Tax</td>
-                                        <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.tax || 0)}</td>
-                                    </tr>
-                                    <tr className="border-t-2 border-gray-300">
-                                        <td colSpan="3" className="text-right py-2 text-base font-bold">Total</td>
-                                        <td className="text-right py-2 text-base font-bold text-orange-600">{formatCurrency(selectedOrder.totalPrice)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-
-                            <div className="text-center text-xs text-gray-400 border-t border-gray-300 pt-4 mt-4">
-                                <p>Thank you for your order!</p>
-                                <p>© {new Date().getFullYear()} Kivora. All rights reserved.</p>
+                            <div className="text-right">
+                                <span className={`px-4 py-1 rounded-full text-white text-sm font-medium ${getStatusBadgeColor(selectedOrder.status || 'pending')}`}>
+                                    {selectedOrder.status || 'Pending'}
+                                </span>
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h3 className="font-semibold text-gray-700 mb-2">Customer Information</h3>
+                                <p className="text-sm">{selectedOrder.user?.name || 'Unknown'}</p>
+                                <p className="text-sm text-gray-600">{selectedOrder.user?.email || 'N/A'}</p>
+                                <p className="text-sm text-gray-600">{selectedOrder.user?.phone || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-700 mb-2">Shipping Address</h3>
+                                <p className="text-sm">{selectedOrder.shippingAddress?.street || 'N/A'}</p>
+                                <p className="text-sm">
+                                    {selectedOrder.shippingAddress?.city || ''}
+                                    {selectedOrder.shippingAddress?.state ? `, ${selectedOrder.shippingAddress.state}` : ''}
+                                    {selectedOrder.shippingAddress?.zipCode ? ` ${selectedOrder.shippingAddress.zipCode}` : ''}
+                                </p>
+                                <p className="text-sm">{selectedOrder.shippingAddress?.country || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        <table className="w-full mb-6">
+                            <thead>
+                                <tr className="border-b border-gray-200">
+                                    <th className="text-left py-2 text-sm font-semibold">Item</th>
+                                    <th className="text-center py-2 text-sm font-semibold">Qty</th>
+                                    <th className="text-right py-2 text-sm font-semibold">Price</th>
+                                    <th className="text-right py-2 text-sm font-semibold">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {selectedOrder.orderItems?.map((item, index) => (
+                                    <tr key={index} className="border-b border-gray-100">
+                                        <td className="py-2 text-sm">{item.name}</td>
+                                        <td className="text-center py-2 text-sm">{item.quantity}</td>
+                                        <td className="text-right py-2 text-sm">{formatCurrency(item.price)}</td>
+                                        <td className="text-right py-2 text-sm font-medium">{formatCurrency(item.price * item.quantity)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan="3" className="text-right py-2 text-sm font-medium">Subtotal</td>
+                                    <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.totalPrice)}</td>
+                                </tr>
+                                <tr>
+                                    <td colSpan="3" className="text-right py-2 text-sm font-medium">Shipping</td>
+                                    <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.shippingFee || 0)}</td>
+                                </tr>
+                                <tr>
+                                    <td colSpan="3" className="text-right py-2 text-sm font-medium">Tax</td>
+                                    <td className="text-right py-2 text-sm font-medium">{formatCurrency(selectedOrder.tax || 0)}</td>
+                                </tr>
+                                <tr className="border-t-2 border-gray-300">
+                                    <td colSpan="3" className="text-right py-2 text-base font-bold">Total</td>
+                                    <td className="text-right py-2 text-base font-bold text-orange-600">{formatCurrency(selectedOrder.totalPrice)}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div className="text-center text-xs text-gray-400 border-t border-gray-300 pt-4 mt-4">
+                            <p>Thank you for your order!</p>
+                            <p>© {new Date().getFullYear()} Kivora. All rights reserved.</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Slide-up Animation CSS */}
