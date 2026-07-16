@@ -17,7 +17,7 @@ import { useVerifyPaymentMutation } from '../slices/orderApiSlice';
 import ShopNavbar from '../components/ShopNavbar';
 import { toast } from 'react-toastify';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 const VerifyPayment = () => {
     const { userInfo } = useSelector((state) => state.auth);
